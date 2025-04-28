@@ -14,37 +14,47 @@ st.set_page_config(
 )
 
 # --- Background & Styling ---
-background_css = """
+background_css = f"""
 <style>
-    .stApp {
-        background-image: url('https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif');
+    .stApp {{
+        background-image: url('https://speechbot-jgl7babx7s8ebfrvg79jf.streamlit.app/60a8cd21-805a-475d-ba3a-0847ee161451.png');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
-    }
-    header {
+    }}
+    header {{
         visibility: hidden;
-    }
-    /* Style mic button */
-    .mic-container button {
-        background-color: #ff4b4b !important;
-        color: white !important;
+    }}
+    /* Mic button container */
+    .mic-container button {{
+        background: #ff4b4b;
+        color: white;
         font-weight: bold;
         font-size: 18px;
-        padding: 10px 24px;
+        padding: 12px 28px;
         border: 2px solid white;
-        border-radius: 10px;
-        box-shadow: 0px 0px 15px #ff4b4b;
-        transition: all 0.3s ease-in-out;
-    }
-    .mic-container button:hover {
+        border-radius: 12px;
+        box-shadow: 0 0 20px #ff4b4b, 0 0 40px #ff4b4b;
+        animation: glow 2s infinite alternate;
+        transition: 0.3s ease;
+    }}
+    .mic-container button:hover {{
         background-color: #ff7b7b !important;
-    }
-    /* Remove dark background behind mic recorder */
-    .mic-container > div {
+    }}
+    /* Mic container background transparent */
+    .mic-container > div {{
         background: transparent !important;
         box-shadow: none !important;
-    }
+    }}
+
+    @keyframes glow {{
+        from {{
+            box-shadow: 0 0 10px #ff4b4b, 0 0 20px #ff4b4b;
+        }}
+        to {{
+            box-shadow: 0 0 20px #ff7b7b, 0 0 40px #ff7b7b;
+        }}
+    }}
 </style>
 """
 st.markdown(background_css, unsafe_allow_html=True)
@@ -115,7 +125,7 @@ def text_to_speech_elevenlabs(text):
 
 st.subheader("🎙️ Record your voice")
 
-# 🎤 Mic Recorder inside custom container
+# 🎤 Mic Recorder
 st.markdown('<div class="mic-container">', unsafe_allow_html=True)
 
 audio_data = mic_recorder(
@@ -134,11 +144,9 @@ if audio_data:
 
     st.audio(audio_bytes, format="audio/wav")
 
-    # Save to temp file
     with open("temp_audio.wav", "wb") as f:
         f.write(audio_bytes)
 
-    # Transcribe audio
     user_text = transcribe_audio("temp_audio.wav")
 
     if user_text.strip():
@@ -148,7 +156,6 @@ if audio_data:
         st.subheader("💬 AI Response")
         st.write(response)
 
-        # Text-to-Speech
         audio_path = text_to_speech_elevenlabs(response)
         if audio_path:
             st.audio(audio_path, format="audio/mp3")
