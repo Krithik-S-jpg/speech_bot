@@ -1,3 +1,4 @@
+Cython
 streamlit
 assemblyai
 google-generativeai
