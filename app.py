@@ -72,6 +72,35 @@ button:hover {
 """
 st.markdown(fix_black_bar_css, unsafe_allow_html=True)
 
+fix_black_mic_button_css = """
+<style>
+/* Fix the black box around mic recorder */
+div[data-testid="stVerticalBlock"] > div {
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Also style the mic button itself */
+button {
+    background-color: #ff4b4b !important; /* red button */
+    color: white !important;
+    font-weight: bold;
+    font-size: 18px;
+    padding: 10px 20px;
+    border: 2px solid white;
+    border-radius: 10px;
+    box-shadow: 0px 0px 12px #ff4b4b;
+}
+
+/* Optional: On hover */
+button:hover {
+    background-color: #ff7b7b !important; /* lighter red */
+}
+</style>
+"""
+st.markdown(fix_black_mic_button_css, unsafe_allow_html=True)
+
+
 
 # Configure APIs
 aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
