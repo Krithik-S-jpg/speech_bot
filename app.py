@@ -24,22 +24,28 @@ background_css = """
 """
 st.markdown(background_css, unsafe_allow_html=True)
 
-hide_mic_button_css = """
+hide_black_box_css = """
 <style>
-button {
+/* Target the div containing the microphone recorder */
+div[data-testid="stHorizontalBlock"] > div:first-child {
     background-color: transparent !important;
-    color: white !important;
-    border: 2px solid white !important;
-    padding: 0.5rem 1rem;
-    border-radius: 10px;
-    font-size: 1.2rem;
+    box-shadow: none !important;
 }
-button:hover {
-    background-color: rgba(255, 255, 255, 0.2) !important;
+
+/* Optional: make button look better */
+button {
+    background-color: #ff4b4b !important;
+    color: white !important;
+    border-radius: 12px !important;
+    padding: 8px 16px !important;
+    font-size: 18px !important;
+    border: none !important;
 }
 </style>
 """
-st.markdown(hide_mic_button_css, unsafe_allow_html=True)
+# Add the style at the very top
+st.markdown(hide_black_box_css, unsafe_allow_html=True)
+
 
 fix_black_bar_css = """
 <style>
