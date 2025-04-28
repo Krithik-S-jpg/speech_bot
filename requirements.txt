@@ -1,8 +1,6 @@
-Cython
 streamlit
 assemblyai
 google-generativeai
 requests
-pyaudio
-wave
-python-dotenv
+sounddevice
+numpy
