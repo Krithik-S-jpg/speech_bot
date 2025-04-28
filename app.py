@@ -24,11 +24,11 @@ background_css = """
 st.markdown(background_css, unsafe_allow_html=True)
 
 # Configure APIs
-aai.settings.api_key = os.getenv("11c6274223b9472fa206d42b02f1de1f")
-gen_ai.configure(api_key=os.getenv("AIzaSyByJzlUoKiO1y1xytWczcnQvda9SAwYReo"))
+aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
+gen_ai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = gen_ai.GenerativeModel('gemini-1.5-flash')
 
-ELEVENLABS_API_KEY = os.getenv("sk_0cd655e3b51e9f00a46ccf3e4ff023583ac12cf612b33e21")
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 ELEVENLABS_VOICE_ID_MALE = "pNInz6obpgDQGcFmaJgB"
 ELEVENLABS_VOICE_ID_FEMALE = "21m00Tcm4TlvDq8ikWAM"
 
