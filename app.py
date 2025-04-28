@@ -8,6 +8,36 @@ from streamlit_mic_recorder import mic_recorder  # <<< Changed
 # Streamlit page settings
 st.set_page_config(page_title="AI Voice Companion", page_icon="🤖", layout="wide", initial_sidebar_state="collapsed")
 
+remove_black_block_css = """
+<style>
+/* Remove black background around mic recorder */
+div[data-testid="stVerticalBlock"] {
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Style the actual mic button */
+button {
+    background-color: #ff4b4b !important;
+    color: white !important;
+    font-weight: bold !important;
+    font-size: 18px !important;
+    padding: 10px 20px !important;
+    border: 2px solid white !important;
+    border-radius: 10px !important;
+    box-shadow: 0px 0px 12px #ff4b4b !important;
+    transition: 0.3s ease;
+}
+
+/* Button hover */
+button:hover {
+    background-color: #ff7b7b !important;
+}
+</style>
+"""
+st.markdown(remove_black_block_css, unsafe_allow_html=True)
+
+
 # Background style
 background_css = """
  <style>
