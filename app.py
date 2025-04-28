@@ -3,7 +3,7 @@ import assemblyai as aai
 import google.generativeai as gen_ai
 import requests
 import os
-from st_audiorec import st_audiorec  # New import!
+import st_audiorec  # New import!
 
 # Set up Streamlit page
 st.set_page_config(page_title="AI Voice Companion", page_icon="🤖", layout="wide", initial_sidebar_state="collapsed")
