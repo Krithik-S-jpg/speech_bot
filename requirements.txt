@@ -1,7 +1,6 @@
 streamlit
-streamlit-webrtc
+st-audiorec
 assemblyai
 google-generativeai
-av
 soundfile
 requests

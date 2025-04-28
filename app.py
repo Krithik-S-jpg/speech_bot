@@ -3,14 +3,13 @@ import assemblyai as aai
 import google.generativeai as gen_ai
 import requests
 import os
-from streamlit_webrtc import webrtc_streamer, WebRtcMode
-import av
+import st_audiorec
 import soundfile as sf
 
-# Set up Streamlit page
+# Streamlit page settings
 st.set_page_config(page_title="AI Voice Companion", page_icon="🤖", layout="wide", initial_sidebar_state="collapsed")
 
-# Custom background
+# Background style
 background_css = """
  <style>
      .stApp {
@@ -38,20 +37,20 @@ ELEVENLABS_VOICE_ID_FEMALE = "21m00Tcm4TlvDq8ikWAM"
 # App Title
 st.title("🤖 Ask Pookie - Your AI Companion")
 
-# Sidebar options
+# Sidebar settings
 st.sidebar.header("Settings")
 voice_selection = st.sidebar.radio("Select Voice", ["Male", "Female"])
 language_selection = st.sidebar.radio("Choose Language", ["English", "Tamil", "Malayalam", "Telugu", "Hindi"], index=0)
 volume_percent = st.sidebar.slider("Volume", 0, 100, 100)
 
-# Set voice and API URL
+# Voice ID selection
 ELEVENLABS_VOICE_ID = ELEVENLABS_VOICE_ID_FEMALE if voice_selection == "Female" else ELEVENLABS_VOICE_ID_MALE
 ELEVENLABS_URL = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
 
 # Functions
-def transcribe_audio(audio_path):
+def transcribe_audio(audio_file):
     transcriber = aai.Transcriber()
-    transcript = transcriber.transcribe(audio_path)
+    transcript = transcriber.transcribe(audio_file)
     return transcript.text if transcript else ""
 
 def gemini_chat(query, lang):
@@ -77,6 +76,7 @@ def text_to_speech_elevenlabs(text):
         }
     }
     response = requests.post(ELEVENLABS_URL, json=data, headers=headers)
+
     if response.status_code == 200:
         audio_path = "response_audio.mp3"
         with open(audio_path, "wb") as f:
@@ -86,45 +86,36 @@ def text_to_speech_elevenlabs(text):
         st.error(f"⚠ ElevenLabs API Error: {response.text}")
         return None
 
-# ---- MAIN APP ----
+# --- Main App ---
+
 st.subheader("🎙️ Record your voice")
 
-# Use webrtc_streamer
-ctx = webrtc_streamer(
-    key="audio",
-    mode=WebRtcMode.SENDONLY,
-    media_stream_constraints={"audio": True, "video": False},
-    rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
-)
+audio_data = st_audiorec()
 
-if ctx.state.playing and ctx.audio_receiver:
-    try:
-        audio_frames = ctx.audio_receiver.get_frames(timeout=1)
-        if audio_frames:
-            frame = audio_frames[0]
-            audio_data = frame.to_ndarray()
+if audio_data is not None:
+    st.audio(audio_data, format="audio/wav")
 
-            # Save audio
-            sf.write('temp_audio.wav', audio_data, 16000)
-            st.success("✅ Audio recorded!")
+    # Save audio to file
+    with open("temp_audio.wav", "wb") as f:
+        f.write(audio_data)
 
-            # Then your further code: transcribe, respond, speak
-            user_text = transcribe_audio("temp_audio.wav")
-            if user_text.strip():
-                st.success(f"✅ Recognized: {user_text}")
-                response = gemini_chat(user_text, language_selection)
-                st.subheader("💬 AI Response")
-                st.write(response)
+    # Transcribe
+    user_text = transcribe_audio("temp_audio.wav")
 
-                audio_path = text_to_speech_elevenlabs(response)
-                if audio_path:
-                    st.audio(audio_path, format="audio/mp3")
-                    st.info(f"🔊 Set your system volume to {volume_percent}% for best experience.")
-                else:
-                    st.error("⚠ Failed to generate speech.")
-            else:
-                st.warning("❌ No speech detected, please try again.")
-    except Exception as e:
-        st.warning("🎙️ Waiting for audio input... Please click Start and speak.")
+    if user_text.strip():
+        st.success(f"✅ Recognized: {user_text}")
+        response = gemini_chat(user_text, language_selection)
+        st.subheader("💬 AI Response")
+        st.write(response)
+
+        audio_path = text_to_speech_elevenlabs(response)
+        if audio_path:
+            st.audio(audio_path, format="audio/mp3")
+            st.info(f"🔊 Set your system volume to {volume_percent}% for best experience.")
+        else:
+            st.error("⚠ Failed to generate speech.")
+    else:
+        st.warning("❌ No speech detected, please try again.")
 else:
-    st.info("⬆️ Click the Start button above to begin recording.")
+    st.info("⬆️ Click the mic button above to record!")
+
