@@ -1,7 +1,6 @@
 streamlit
-streamlit-webrtc==0.45.0
+streamlit-audiorecorder
 assemblyai
 google-generativeai
-soundfile
 requests
-numpy
+soundfile

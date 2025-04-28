@@ -3,26 +3,24 @@ import assemblyai as aai
 import google.generativeai as gen_ai
 import requests
 import os
-import soundfile as sf
-import numpy as np
-from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
+from streamlit_audiorecorder import audiorecorder
 
 # Streamlit page settings
 st.set_page_config(page_title="AI Voice Companion", page_icon="🤖", layout="wide", initial_sidebar_state="collapsed")
 
 # Background style
 background_css = """
-<style>
-    .stApp {
-        background-image: url('https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif');
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-    }
-    header {
-        visibility: hidden;
-    }
-</style>
+ <style>
+     .stApp {
+         background-image: url('https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif');
+         background-size: cover;
+         background-position: center;
+         background-attachment: fixed;
+     }
+     header {
+         visibility: hidden;
+     }
+ </style>
 """
 st.markdown(background_css, unsafe_allow_html=True)
 
@@ -87,29 +85,18 @@ def text_to_speech_elevenlabs(text):
         st.error(f"⚠ ElevenLabs API Error: {response.text}")
         return None
 
-# Streamlit WebRTC for audio recording
+# --- Main App ---
+
 st.subheader("🎙️ Record your voice")
 
-audio_bytes = st.session_state.get('audio_bytes', None)
+audio = audiorecorder("Click to record", "Recording...")
 
-def audio_callback(frame):
-    sound = frame.to_ndarray()
-    st.session_state['audio_bytes'] = sound.tobytes()
-    return frame
-
-webrtc_streamer(
-    key="sendonly-audio",
-    mode=WebRtcMode.SENDONLY,
-    client_settings=ClientSettings(media_stream_constraints={"audio": True, "video": False}),
-    audio_frame_callback=audio_callback,
-)
-
-if audio_bytes:
-    st.audio(audio_bytes, format="audio/wav")
+if len(audio) > 0:
+    st.audio(audio.tobytes(), format="audio/wav")
 
     # Save audio to file
     with open("temp_audio.wav", "wb") as f:
-        f.write(audio_bytes)
+        f.write(audio.tobytes())
 
     # Transcribe
     user_text = transcribe_audio("temp_audio.wav")
@@ -129,4 +116,4 @@ if audio_bytes:
     else:
         st.warning("❌ No speech detected, please try again.")
 else:
-    st.info("⬆️ Click the mic button above to start recording!")
+    st.info("⬆️ Click the mic button above to record!")
