@@ -100,8 +100,8 @@ from streamlit_server_state import server_state, server_state_lock
 if "audio_data" not in server_state:
     server_state.audio_data = None
 
-if st.query_params().get("recorded_audio"):
-    server_state.audio_data = st.query_params()["recorded_audio"]
+if st.experimental_get_query_params().get("recorded_audio"):
+    server_state.audio_data = st.experimental_get_query_params()["recorded_audio"]
 
 # Function to transcribe
 def transcribe_audio_bytes(audio_bytes):
