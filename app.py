@@ -97,35 +97,34 @@ ctx = webrtc_streamer(
     rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
 )
 
-if ctx.audio_receiver:
-    audio_frames = ctx.audio_receiver.get_frames(timeout=1)
-    if audio_frames:
-        frame = audio_frames[0]
-        audio_data = frame.to_ndarray()
+if ctx.state.playing and ctx.audio_receiver:
+    try:
+        audio_frames = ctx.audio_receiver.get_frames(timeout=1)
+        if audio_frames:
+            frame = audio_frames[0]
+            audio_data = frame.to_ndarray()
 
-        # Save audio to file
-        sf.write('temp_audio.wav', audio_data, 16000)
+            # Save audio
+            sf.write('temp_audio.wav', audio_data, 16000)
+            st.success("✅ Audio recorded!")
 
-        st.success("✅ Audio recorded!")
+            # Then your further code: transcribe, respond, speak
+            user_text = transcribe_audio("temp_audio.wav")
+            if user_text.strip():
+                st.success(f"✅ Recognized: {user_text}")
+                response = gemini_chat(user_text, language_selection)
+                st.subheader("💬 AI Response")
+                st.write(response)
 
-        user_text = transcribe_audio("temp_audio.wav")
-
-        if user_text.strip():
-            st.success(f"✅ Recognized: {user_text}")
-            response = gemini_chat(user_text, language_selection)
-            st.subheader("💬 AI Response")
-            st.write(response)
-
-            audio_path = text_to_speech_elevenlabs(response)
-            if audio_path:
-                st.audio(audio_path, format="audio/mp3")
-                st.info(f"🔊 Set your system volume to {volume_percent}% for best experience.")
+                audio_path = text_to_speech_elevenlabs(response)
+                if audio_path:
+                    st.audio(audio_path, format="audio/mp3")
+                    st.info(f"🔊 Set your system volume to {volume_percent}% for best experience.")
+                else:
+                    st.error("⚠ Failed to generate speech.")
             else:
-                st.error("⚠ Failed to generate speech.")
-        else:
-            st.warning("❌ No speech detected, please try again.")
-    else:
-        st.info("⬆️ Speak into the mic after clicking Start.")
+                st.warning("❌ No speech detected, please try again.")
+    except Exception as e:
+        st.warning("🎙️ Waiting for audio input... Please click Start and speak.")
 else:
-    st.info("⬆️ Click the Start button to begin recording.")
-
+    st.info("⬆️ Click the Start button above to begin recording.")
