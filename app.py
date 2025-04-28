@@ -3,6 +3,7 @@ import assemblyai as aai
 import google.generativeai as gen_ai
 import requests
 import os
+from st_audiorec import st_audiorec  # New import!
 
 # Set up Streamlit page
 st.set_page_config(page_title="AI Voice Companion", page_icon="🤖", layout="wide", initial_sidebar_state="collapsed")
@@ -87,13 +88,18 @@ def text_to_speech_elevenlabs(text):
         st.error(f"⚠ ElevenLabs API Error: {response.text}")
         return None
 
-# Upload/Record audio
-uploaded_audio = st.file_uploader("🎤 Upload or Record your voice", type=["wav", "mp3", "m4a"])
+# ---- MAIN APP ----
 
-if uploaded_audio:
-    st.audio(uploaded_audio, format="audio/wav")
+# 🎙️ Record Audio
+st.subheader("🎙️ Record your voice")
+audio_data = st_audiorec()
+
+if audio_data is not None:
+    st.audio(audio_data, format="audio/wav")
+    
+    # Save recorded audio to file
     with open("temp_audio.wav", "wb") as f:
-        f.write(uploaded_audio.read())
+        f.write(audio_data)
 
     user_text = transcribe_audio("temp_audio.wav")
 
@@ -111,3 +117,6 @@ if uploaded_audio:
             st.error("⚠ Failed to generate speech.")
     else:
         st.warning("❌ No speech detected, please try again.")
+else:
+    st.info("⬆️ Click the mic button above to record!")
+
