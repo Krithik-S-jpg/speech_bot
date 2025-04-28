@@ -8,36 +8,6 @@ from streamlit_mic_recorder import mic_recorder  # <<< Changed
 # Streamlit page settings
 st.set_page_config(page_title="AI Voice Companion", page_icon="🤖", layout="wide", initial_sidebar_state="collapsed")
 
-remove_black_block_css = """
-<style>
-/* Remove black background around mic recorder */
-div[data-testid="stVerticalBlock"] {
-    background-color: transparent !important;
-    box-shadow: none !important;
-}
-
-/* Style the actual mic button */
-button {
-    background-color: #ff4b4b !important;
-    color: white !important;
-    font-weight: bold !important;
-    font-size: 18px !important;
-    padding: 10px 20px !important;
-    border: 2px solid white !important;
-    border-radius: 10px !important;
-    box-shadow: 0px 0px 12px #ff4b4b !important;
-    transition: 0.3s ease;
-}
-
-/* Button hover */
-button:hover {
-    background-color: #ff7b7b !important;
-}
-</style>
-"""
-st.markdown(remove_black_block_css, unsafe_allow_html=True)
-
-
 # Background style
 background_css = """
  <style>
@@ -54,65 +24,11 @@ background_css = """
 """
 st.markdown(background_css, unsafe_allow_html=True)
 
-hide_black_background_css = """
-<style>
-/* Make background around 'Start recording' button transparent */
-div[role="button"] {
-    background-color: transparent !important;
-    border: 2px solid #ff4b4b !important;
-    color: white !important;
-    font-weight: bold !important;
-    font-size: 20px !important;
-    padding: 10px 20px !important;
-    border-radius: 10px !important;
-    box-shadow: 0px 0px 12px #ff4b4b !important;
-}
-
-/* Remove the black container that wraps around */
-div[data-testid="stVerticalBlock"] > div:nth-child(1) {
-    background-color: transparent !important;
-    box-shadow: none !important;
-}
-</style>
-"""
-
-import streamlit as st
-
-st.markdown(hide_black_background_css, unsafe_allow_html=True)
-
-
-
-fix_black_bar_css = """
-<style>
-section.main > div { 
-    background-color: transparent !important;
-}
-button {
-    background-color: #ff4b4b !important;  /* or transparent */
-    color: white !important;
-    border: 2px solid white !important;
-    padding: 0.5rem 1rem;
-    border-radius: 10px;
-    font-size: 1.2rem;
-}
-button:hover {
-    background-color: rgba(255, 255, 255, 0.2) !important;
-}
-</style>
-"""
-st.markdown(fix_black_bar_css, unsafe_allow_html=True)
-
 fix_black_mic_button_css = """
 <style>
-/* Fix the black box around mic recorder */
-div[data-testid="stVerticalBlock"] > div {
-    background-color: transparent !important;
-    box-shadow: none !important;
-}
-
-/* Also style the mic button itself */
-button {
-    background-color: #ff4b4b !important; /* red button */
+/* Target only the mic recorder button */
+div[data-testid="stVerticalBlock"] button {
+    background-color: #ff4b4b !important;
     color: white !important;
     font-weight: bold;
     font-size: 18px;
@@ -120,16 +36,22 @@ button {
     border: 2px solid white;
     border-radius: 10px;
     box-shadow: 0px 0px 12px #ff4b4b;
+    transition: 0.3s ease;
 }
 
-/* Optional: On hover */
-button:hover {
-    background-color: #ff7b7b !important; /* lighter red */
+/* Hover effect for mic button */
+div[data-testid="stVerticalBlock"] button:hover {
+    background-color: #ff7b7b !important;
+}
+
+/* Remove black background around mic recorder */
+div[data-testid="stVerticalBlock"] > div {
+    background-color: transparent !important;
+    box-shadow: none !important;
 }
 </style>
 """
 st.markdown(fix_black_mic_button_css, unsafe_allow_html=True)
-
 
 
 # Configure APIs
