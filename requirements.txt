@@ -1,6 +1,4 @@
 streamlit
+requests
 assemblyai
 google-generativeai
-requests
-pydub
-streamlit-server-state
