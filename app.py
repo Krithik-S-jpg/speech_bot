@@ -2,9 +2,6 @@ import streamlit as st
 import assemblyai as aai
 import google.generativeai as gen_ai
 import requests
-import sounddevice as sd
-import numpy as np
-import wave
 import os
 
 # Set up Streamlit page
@@ -48,26 +45,10 @@ volume_percent = st.sidebar.slider("Volume", 0, 100, 100)
 ELEVENLABS_VOICE_ID = ELEVENLABS_VOICE_ID_FEMALE if voice_selection == "Female" else ELEVENLABS_VOICE_ID_MALE
 ELEVENLABS_URL = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
 
-# Function to record audio using sounddevice
-def record_audio(filename="temp_audio.wav", duration=5, rate=44100, channels=1):
-    st.info(f"🎙 Recording for {duration} seconds... Speak now!")
-    recording = sd.rec(int(duration * rate), samplerate=rate, channels=channels, dtype='int16')
-    sd.wait()  # Wait until recording is finished
-
-    # Save as WAV file
-    with wave.open(filename, 'wb') as wf:
-        wf.setnchannels(channels)
-        wf.setsampwidth(2)  # 16-bit audio -> 2 bytes
-        wf.setframerate(rate)
-        wf.writeframes(recording.tobytes())
-
-    st.success("🎙 Recording finished!")
-    return filename
-
 # Function to transcribe with AssemblyAI
-def transcribe_audio(filename):
+def transcribe_audio(audio_file):
     transcriber = aai.Transcriber()
-    transcript = transcriber.transcribe(filename)
+    transcript = transcriber.transcribe(audio_file)
     return transcript.text if transcript else ""
 
 # Function to chat with Gemini
@@ -106,10 +87,15 @@ def text_to_speech_elevenlabs(text):
         st.error(f"⚠ ElevenLabs API Error: {response.text}")
         return None
 
-# Handle live interaction
-def handle_live_voice_input():
-    audio_path = record_audio()
-    user_text = transcribe_audio(audio_path)
+# Upload/Record audio
+uploaded_audio = st.file_uploader("🎤 Upload or Record your voice", type=["wav", "mp3", "m4a"])
+
+if uploaded_audio:
+    st.audio(uploaded_audio, format="audio/wav")
+    with open("temp_audio.wav", "wb") as f:
+        f.write(uploaded_audio.read())
+
+    user_text = transcribe_audio("temp_audio.wav")
 
     if user_text.strip():
         st.success(f"✅ Recognized: {user_text}")
@@ -125,7 +111,3 @@ def handle_live_voice_input():
             st.error("⚠ Failed to generate speech.")
     else:
         st.warning("❌ No speech detected, please try again.")
-
-# Button to trigger
-if st.button("🎤 Speak Now"):
-    handle_live_voice_input()

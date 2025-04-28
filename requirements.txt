@@ -2,5 +2,3 @@ streamlit
 assemblyai
 google-generativeai
 requests
-sounddevice
-numpy
