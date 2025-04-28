@@ -1,5 +1,6 @@
 streamlit
-streamlit-audio-recorder
 assemblyai
 google-generativeai
 requests
+pydub
+streamlit-server-state

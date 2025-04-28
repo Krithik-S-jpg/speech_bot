@@ -3,12 +3,14 @@ import assemblyai as aai
 import google.generativeai as gen_ai
 import requests
 import os
-import st_audiorec  # New import!
+import base64
+import io
+from pydub import AudioSegment
 
-# Set up Streamlit page
+# Streamlit page setup
 st.set_page_config(page_title="AI Voice Companion", page_icon="🤖", layout="wide", initial_sidebar_state="collapsed")
 
-# Custom background
+# Background CSS
 background_css = """
  <style>
      .stApp {
@@ -33,26 +35,84 @@ ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 ELEVENLABS_VOICE_ID_MALE = "pNInz6obpgDQGcFmaJgB"
 ELEVENLABS_VOICE_ID_FEMALE = "21m00Tcm4TlvDq8ikWAM"
 
-# App Title
+# Title
 st.title("🤖 Ask Pookie - Your AI Companion")
 
-# Sidebar options
+# Sidebar
 st.sidebar.header("Settings")
 voice_selection = st.sidebar.radio("Select Voice", ["Male", "Female"])
 language_selection = st.sidebar.radio("Choose Language", ["English", "Tamil", "Malayalam", "Telugu", "Hindi"], index=0)
 volume_percent = st.sidebar.slider("Volume", 0, 100, 100)
 
-# Set voice and API URL
+# Set Voice ID
 ELEVENLABS_VOICE_ID = ELEVENLABS_VOICE_ID_FEMALE if voice_selection == "Female" else ELEVENLABS_VOICE_ID_MALE
 ELEVENLABS_URL = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
 
-# Function to transcribe with AssemblyAI
-def transcribe_audio(audio_file):
+# Recorder frontend using HTML + JS
+st.markdown("""
+    <h3>🎙️ Record your voice</h3>
+    <audio id="audio" controls></audio><br>
+    <button id="start">Start Recording</button>
+    <button id="stop">Stop Recording</button>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks;
+
+        document.getElementById('start').onclick = async function() {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = function(event) {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = function() {
+                const audioBlob = new Blob(audioChunks);
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = document.getElementById('audio');
+                audio.src = audioUrl;
+
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = function() {
+                    const base64AudioMessage = reader.result.split(',')[1];
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/recorded_audio');
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+                    xhr.send(JSON.stringify({ audio_data: base64AudioMessage }));
+                }
+            };
+
+            mediaRecorder.start();
+        };
+
+        document.getElementById('stop').onclick = function() {
+            mediaRecorder.stop();
+        };
+    </script>
+""", unsafe_allow_html=True)
+
+# Receive recorded audio
+from streamlit_server_state import server_state, server_state_lock
+
+if "audio_data" not in server_state:
+    server_state.audio_data = None
+
+if st.experimental_get_query_params().get("recorded_audio"):
+    server_state.audio_data = st.experimental_get_query_params()["recorded_audio"]
+
+# Function to transcribe
+def transcribe_audio_bytes(audio_bytes):
+    with open("temp_audio.wav", "wb") as f:
+        f.write(audio_bytes)
+
     transcriber = aai.Transcriber()
-    transcript = transcriber.transcribe(audio_file)
+    transcript = transcriber.transcribe("temp_audio.wav")
     return transcript.text if transcript else ""
 
-# Function to chat with Gemini
+# Function for Gemini
 def gemini_chat(query, lang):
     try:
         prompt = f"Respond in {lang}. For the query '{query}', generate a helpful response in 10-25 words without asking follow-up questions."
@@ -61,7 +121,7 @@ def gemini_chat(query, lang):
     except Exception as e:
         return f"Error: {str(e)}"
 
-# Function to convert text to speech
+# ElevenLabs speech
 def text_to_speech_elevenlabs(text):
     headers = {
         "Accept": "audio/mpeg",
@@ -76,7 +136,6 @@ def text_to_speech_elevenlabs(text):
             "similarity_boost": 0.8
         }
     }
-
     response = requests.post(ELEVENLABS_URL, json=data, headers=headers)
 
     if response.status_code == 200:
@@ -88,24 +147,16 @@ def text_to_speech_elevenlabs(text):
         st.error(f"⚠ ElevenLabs API Error: {response.text}")
         return None
 
-# ---- MAIN APP ----
+# If audio recorded
+if server_state.audio_data:
+    audio_bytes = base64.b64decode(server_state.audio_data)
+    st.audio(audio_bytes, format="audio/wav")
 
-# 🎙️ Record Audio
-st.subheader("🎙️ Record your voice")
-audio_data = st_audiorec()
+    recognized_text = transcribe_audio_bytes(audio_bytes)
 
-if audio_data is not None:
-    st.audio(audio_data, format="audio/wav")
-    
-    # Save recorded audio to file
-    with open("temp_audio.wav", "wb") as f:
-        f.write(audio_data)
-
-    user_text = transcribe_audio("temp_audio.wav")
-
-    if user_text.strip():
-        st.success(f"✅ Recognized: {user_text}")
-        response = gemini_chat(user_text, language_selection)
+    if recognized_text.strip():
+        st.success(f"✅ Recognized: {recognized_text}")
+        response = gemini_chat(recognized_text, language_selection)
         st.subheader("💬 AI Response")
         st.write(response)
 
@@ -117,6 +168,3 @@ if audio_data is not None:
             st.error("⚠ Failed to generate speech.")
     else:
         st.warning("❌ No speech detected, please try again.")
-else:
-    st.info("⬆️ Click the mic button above to record!")
-
