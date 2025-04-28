@@ -1,9 +1,11 @@
 import streamlit as st
+from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
+import av
 import assemblyai as aai
 import google.generativeai as gen_ai
 import requests
-import os
 import tempfile
+import os
 
 # API Keys
 aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
@@ -24,32 +26,46 @@ language_selection = st.sidebar.radio("Choose Language", ["English", "Tamil", "M
 
 ELEVENLABS_VOICE_ID = ELEVENLABS_VOICE_ID_FEMALE if voice_selection == "Female" else ELEVENLABS_VOICE_ID_MALE
 
-# Recorder using audio_recorder
-audio_bytes = st.audio_recorder(
-    text="🎙️ Click to Record",
-    recording_color="#e60073",
-    neutral_color="#6c757d",
-    icon_size="2x",
+# Recorder setup
+st.subheader("🎙️ Record your voice")
+
+ctx = webrtc_streamer(
+    key="audio",
+    mode=WebRtcMode.SENDONLY,
+    client_settings=ClientSettings(
+        media_stream_constraints={
+            "audio": True,
+            "video": False,
+        },
+    ),
 )
 
-if audio_bytes:
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-        tmp_file.write(audio_bytes)
-        tmp_file_path = tmp_file.name
+if ctx.audio_receiver:
+    audio_frames = ctx.audio_receiver.get_frames(timeout=5)
 
-    # Transcription
-    with st.spinner("🔎 Transcribing your speech..."):
+    # Save audio to temporary WAV file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as f:
+        with av.open(f.name, mode='w', format='wav') as container:
+            stream = container.add_stream('pcm_s16le')
+            for frame in audio_frames:
+                container.mux(frame)
+        audio_path = f.name
+
+    st.audio(audio_path)
+
+    # Transcribe audio
+    with st.spinner("🔎 Transcribing..."):
         transcriber = aai.Transcriber()
-        transcript = transcriber.transcribe(tmp_file_path)
-        recognized_text = transcript.text if transcript else ""
+        transcript = transcriber.transcribe(audio_path)
+        recognized_text = transcript.text
 
     if recognized_text:
         st.success(f"✅ You said: {recognized_text}")
 
         # Gemini Response
-        with st.spinner("🤖 AI is thinking..."):
+        with st.spinner("🤖 AI Thinking..."):
             model = gen_ai.GenerativeModel('gemini-1.5-flash')
-            prompt = f"Respond in {language_selection}. For the query '{recognized_text}', generate a short friendly helpful response."
+            prompt = f"Respond in {language_selection} for: '{recognized_text}'"
             response = model.generate_content(prompt)
             ai_text = response.text
 
@@ -78,6 +94,7 @@ if audio_bytes:
                 st.audio(response.content, format="audio/mp3")
             else:
                 st.error(f"ElevenLabs Error: {response.text}")
+
     else:
-        st.error("❌ Couldn't detect any speech. Try again.")
+        st.error("❌ Couldn't recognize speech. Try again.")
 
