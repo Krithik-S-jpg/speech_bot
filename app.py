@@ -98,11 +98,11 @@ audio_data = mic_recorder(
 
 if audio_data:
     st.success("✅ Recording complete!")
-    st.audio(audio_data['audio'], format="audio/wav")
+    st.audio(audio_data, format="audio/wav")   # <-- No ['audio'] here
 
     # Save audio to file
     with open("temp_audio.wav", "wb") as f:
-        f.write(audio_data['audio'])
+        f.write(audio_data)   # <-- Directly write audio_data
 
     # Transcribe
     user_text = transcribe_audio("temp_audio.wav")
