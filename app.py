@@ -2,7 +2,8 @@ import streamlit as st
 import assemblyai as aai
 import google.generativeai as gen_ai
 import requests
-import pyaudio
+import sounddevice as sd
+import numpy as np
 import wave
 import os
 
@@ -47,24 +48,18 @@ volume_percent = st.sidebar.slider("Volume", 0, 100, 100)
 ELEVENLABS_VOICE_ID = ELEVENLABS_VOICE_ID_FEMALE if voice_selection == "Female" else ELEVENLABS_VOICE_ID_MALE
 ELEVENLABS_URL = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
 
-# Function to record audio
-def record_audio(filename="temp_audio.wav", duration=5, rate=44100, channels=1, chunk=1024):
-    audio = pyaudio.PyAudio()
-    stream = audio.open(format=pyaudio.paInt16, channels=channels, rate=rate, input=True, frames_per_buffer=chunk)
+# Function to record audio using sounddevice
+def record_audio(filename="temp_audio.wav", duration=5, rate=44100, channels=1):
+    st.info(f"🎙 Recording for {duration} seconds... Speak now!")
+    recording = sd.rec(int(duration * rate), samplerate=rate, channels=channels, dtype='int16')
+    sd.wait()  # Wait until recording is finished
 
-    frames = []
-    for _ in range(0, int(rate / chunk * duration)):
-        frames.append(stream.read(chunk))
-
-    stream.stop_stream()
-    stream.close()
-    audio.terminate()
-
+    # Save as WAV file
     with wave.open(filename, 'wb') as wf:
         wf.setnchannels(channels)
-        wf.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
+        wf.setsampwidth(2)  # 16-bit audio -> 2 bytes
         wf.setframerate(rate)
-        wf.writeframes(b''.join(frames))
+        wf.writeframes(recording.tobytes())
 
     st.success("🎙 Recording finished!")
     return filename
