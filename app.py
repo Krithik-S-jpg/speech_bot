@@ -2,8 +2,8 @@ import streamlit as st
 import assemblyai as aai
 import google.generativeai as gen_ai
 import requests
-import tempfile
 import os
+import tempfile
 
 # API Keys
 aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
@@ -13,20 +13,9 @@ ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 ELEVENLABS_VOICE_ID_MALE = "pNInz6obpgDQGcFmaJgB"
 ELEVENLABS_VOICE_ID_FEMALE = "21m00Tcm4TlvDq8ikWAM"
 
-# Streamlit Page
+# Streamlit Page Setup
 st.set_page_config(page_title="AI Voice Companion", page_icon="🤖", layout="wide")
 st.title("🤖 Ask Pookie - Your AI Companion")
-
-# Background
-st.markdown("""
-<style>
-.stApp {
-    background-image: url('https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif');
-    background-size: cover;
-}
-header {visibility: hidden;}
-</style>
-""", unsafe_allow_html=True)
 
 # Sidebar
 st.sidebar.header("Settings")
@@ -35,38 +24,40 @@ language_selection = st.sidebar.radio("Choose Language", ["English", "Tamil", "M
 
 ELEVENLABS_VOICE_ID = ELEVENLABS_VOICE_ID_FEMALE if voice_selection == "Female" else ELEVENLABS_VOICE_ID_MALE
 
-# Recorder
-st.subheader("🎙️ Record Your Voice")
+# Recorder using audio_recorder
+audio_bytes = st.audio_recorder(
+    text="🎙️ Click to Record",
+    recording_color="#e60073",
+    neutral_color="#6c757d",
+    icon_size="2x",
+)
 
-audio_file = st.file_uploader("Upload your audio (WAV/MP3)", type=["wav", "mp3"])
-
-# Process audio
-if audio_file:
+if audio_bytes:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-        tmp_file.write(audio_file.read())
+        tmp_file.write(audio_bytes)
         tmp_file_path = tmp_file.name
 
-    # Transcribe
-    with st.spinner("🔎 Transcribing..."):
+    # Transcription
+    with st.spinner("🔎 Transcribing your speech..."):
         transcriber = aai.Transcriber()
         transcript = transcriber.transcribe(tmp_file_path)
         recognized_text = transcript.text if transcript else ""
 
     if recognized_text:
-        st.success(f"✅ Recognized: {recognized_text}")
+        st.success(f"✅ You said: {recognized_text}")
 
         # Gemini Response
-        with st.spinner("🤖 Generating AI response..."):
+        with st.spinner("🤖 AI is thinking..."):
             model = gen_ai.GenerativeModel('gemini-1.5-flash')
-            prompt = f"Respond in {language_selection}. For the query '{recognized_text}', generate a friendly helpful response in 10-25 words without asking follow-up questions."
+            prompt = f"Respond in {language_selection}. For the query '{recognized_text}', generate a short friendly helpful response."
             response = model.generate_content(prompt)
             ai_text = response.text
 
         st.subheader("💬 AI Response")
         st.write(ai_text)
 
-        # ElevenLabs Text-to-Speech
-        with st.spinner("🔊 Generating voice..."):
+        # ElevenLabs TTS
+        with st.spinner("🔊 Speaking back..."):
             url = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
             headers = {
                 "Accept": "audio/mpeg",
@@ -88,4 +79,5 @@ if audio_file:
             else:
                 st.error(f"ElevenLabs Error: {response.text}")
     else:
-        st.error("❌ Could not detect any speech. Try again.")
+        st.error("❌ Couldn't detect any speech. Try again.")
+

@@ -2,3 +2,4 @@ streamlit
 requests
 assemblyai
 google-generativeai
+streamlit-audio-recorder
