@@ -24,27 +24,32 @@ background_css = """
 """
 st.markdown(background_css, unsafe_allow_html=True)
 
-hide_black_box_css = """
+hide_black_background_css = """
 <style>
-/* Target the div containing the microphone recorder */
-div[data-testid="stHorizontalBlock"] > div:first-child {
+/* Make background around 'Start recording' button transparent */
+div[role="button"] {
+    background-color: transparent !important;
+    border: 2px solid #ff4b4b !important;
+    color: white !important;
+    font-weight: bold !important;
+    font-size: 20px !important;
+    padding: 10px 20px !important;
+    border-radius: 10px !important;
+    box-shadow: 0px 0px 12px #ff4b4b !important;
+}
+
+/* Remove the black container that wraps around */
+div[data-testid="stVerticalBlock"] > div:nth-child(1) {
     background-color: transparent !important;
     box-shadow: none !important;
 }
-
-/* Optional: make button look better */
-button {
-    background-color: #ff4b4b !important;
-    color: white !important;
-    border-radius: 12px !important;
-    padding: 8px 16px !important;
-    font-size: 18px !important;
-    border: none !important;
-}
 </style>
 """
-# Add the style at the very top
-st.markdown(hide_black_box_css, unsafe_allow_html=True)
+
+import streamlit as st
+
+st.markdown(hide_black_background_css, unsafe_allow_html=True)
+
 
 
 fix_black_bar_css = """
