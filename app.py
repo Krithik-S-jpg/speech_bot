@@ -24,6 +24,24 @@ background_css = """
 """
 st.markdown(background_css, unsafe_allow_html=True)
 
+hide_mic_button_css = """
+<style>
+button {
+    background-color: transparent !important;
+    color: white !important;
+    border: 2px solid white !important;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    font-size: 1.2rem;
+}
+button:hover {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+}
+</style>
+"""
+st.markdown(hide_mic_button_css, unsafe_allow_html=True)
+
+
 # Configure APIs
 aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
 gen_ai.configure(api_key=os.getenv("GEMINI_API_KEY"))
