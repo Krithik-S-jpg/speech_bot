@@ -3,7 +3,7 @@ import assemblyai as aai
 import google.generativeai as gen_ai
 import requests
 import os
-from streamlit_audiorecorder import audiorecorder
+from streamlit_mic_recorder import mic_recorder  # <<< Changed
 
 # Streamlit page settings
 st.set_page_config(page_title="AI Voice Companion", page_icon="🤖", layout="wide", initial_sidebar_state="collapsed")
@@ -89,14 +89,20 @@ def text_to_speech_elevenlabs(text):
 
 st.subheader("🎙️ Record your voice")
 
-audio = audiorecorder("Click to record", "Recording...")
+# 🎤 NEW MIC RECORDER
+audio_data = mic_recorder(
+    start_prompt="🎤 Start recording",
+    stop_prompt="⏹️ Stop recording",
+    key="recorder"
+)
 
-if len(audio) > 0:
-    st.audio(audio.tobytes(), format="audio/wav")
+if audio_data:
+    st.success("✅ Recording complete!")
+    st.audio(audio_data['audio'], format="audio/wav")
 
     # Save audio to file
     with open("temp_audio.wav", "wb") as f:
-        f.write(audio.tobytes())
+        f.write(audio_data['audio'])
 
     # Transcribe
     user_text = transcribe_audio("temp_audio.wav")
